@@ -14,6 +14,9 @@ final class PhoneSocketBridge: NSObject, ObservableObject {
     private var socket: WebSocket?
     private var isConnected = false
 
+    // Publish latest normalized coordinates from the server
+    @Published var latestCoordinateEvent: TouchEvent?
+
     // Configure once at app launch
     func start(url: URL) {
         var req = URLRequest(url: url)
@@ -27,13 +30,30 @@ final class PhoneSocketBridge: NSObject, ObservableObject {
     // Watch -> Server
     func sendUpstream(_ dict: [String: Any]) {
         guard isConnected,
-              let data = try? JSONSerialization.data(withJSONObject: dict) else { return }
+              let data = try? JSONSerialization.data(withJSONObject: dict),
+              let event = try? TouchEvent.FromDict(dict) else { return }
+        
+        guard let type = dict["type"] as? String, type == "padCoord" else {
+            print("wrong type")
+            return
+        }
+        
+        DispatchQueue.main.async {
+            self.latestCoordinateEvent = event
+        }
         socket?.write(data: data)
+        
     }
 
     // Server -> Watch
     private func forwardDownstreamToWatch(_ dict: [String: Any]) {
         PhoneWC.shared.pushToWatch(dict)
+    }
+
+    // Parse downstream pad coordinates and publish locally for iOS AR view
+    private func handleDownstreamDict(_ dict: [String: Any]) {
+        // Forward to watch regardless
+        forwardDownstreamToWatch(dict)
     }
 }
 
@@ -52,13 +72,13 @@ extension PhoneSocketBridge: WebSocketDelegate {
 
         case .binary(let data):
             if let obj = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] {
-                forwardDownstreamToWatch(obj)
+                handleDownstreamDict(obj)
             }
 
         case .text(let text):
             if let d = text.data(using: .utf8),
                let obj = (try? JSONSerialization.jsonObject(with: d)) as? [String: Any] {
-                forwardDownstreamToWatch(obj)
+                handleDownstreamDict(obj)
             }
 
         default:
@@ -80,7 +100,6 @@ final class PhoneWC: NSObject, WCSessionDelegate {
 
     // From Watch -> forward to WS
     func session(_ session: WCSession, didReceiveMessage message: [String : Any]) {
-        print("new message: \(message)")
         PhoneSocketBridge.shared.sendUpstream(message)
     }
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any] = [:]) {
@@ -104,3 +123,6 @@ final class PhoneWC: NSObject, WCSessionDelegate {
     func sessionDidDeactivate(_ session: WCSession) { session.activate() }
     #endif
 }
+
+// Minimal WCSession wrapper on iOS stays the same…
+

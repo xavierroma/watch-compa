@@ -7,12 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1DA038002E7B5997005DFD62 /* watch-controller-app.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1DA037F62E7B5996005DFD62 /* watch-controller-app.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		1DA0381A2E7B5C4F005DFD62 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1DA037E42E7B2C1D005DFD62 /* Assets.xcassets */; };
-		1DA0381D2E7B5C9B005DFD62 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 1DA037E42E7B2C1D005DFD62 /* Assets.xcassets */; };
+		1DA038002E7B5997005DFD62 /* watch-app.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 1DA037F62E7B5996005DFD62 /* watch-app.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		1DA038202E7B6FF4005DFD62 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA0381F2E7B6FF4005DFD62 /* Starscream */; };
 		1DA038222E7B7017005DFD62 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = 1DA038212E7B7017005DFD62 /* Starscream */; };
+		1DD8FEC92E7C8AC200B0893F /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8FEC72E7C8AC200B0893F /* Package.swift */; };
+		1DD8FECA2E7C8AC200B0893F /* TouchEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8FEC12E7C8AC200B0893F /* TouchEvent.swift */; };
+		1DD8FECB2E7C8AC200B0893F /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8FEC72E7C8AC200B0893F /* Package.swift */; };
+		1DD8FECC2E7C8AC200B0893F /* TouchEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DD8FEC12E7C8AC200B0893F /* TouchEvent.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		1DD8FEDD2E7C989B00B0893F /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = text.plist;
+			inputFiles = (
+			);
+			isEditable = 1;
+			outputFiles = (
+			);
+			script = "# builtin-copyPlist\n";
+		};
+/* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
 		1DA038142E7B59F9005DFD62 /* PBXContainerItemProxy */ = {
@@ -31,7 +47,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				1DA038002E7B5997005DFD62 /* watch-controller-app.app in Embed Watch Content */,
+				1DA038002E7B5997005DFD62 /* watch-app.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -39,35 +55,40 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1DA037BA2E7B2B3E005DFD62 /* watch-controller-setup.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watch-controller-setup.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		1DA037E42E7B2C1D005DFD62 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		1DA037F62E7B5996005DFD62 /* watch-controller-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watch-controller-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DA037BA2E7B2B3E005DFD62 /* ios-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "ios-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DA037F62E7B5996005DFD62 /* watch-app.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "watch-app.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DD8FEC12E7C8AC200B0893F /* TouchEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TouchEvent.swift; sourceTree = "<group>"; };
+		1DD8FEC72E7C8AC200B0893F /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		1DA038052E7B59AE005DFD62 /* Exceptions for "watch-controller-app" folder in "watch-controller-setup" target */ = {
+		1DD8FED52E7C8E2900B0893F /* Exceptions for "Config" folder in "ios-app" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppConfig.swift,
 				ConfigStore.swift,
-				TouchEvent.swift,
 			);
-			target = 1DA037B92E7B2B3E005DFD62 /* watch-controller-setup */;
+			target = 1DA037B92E7B2B3E005DFD62 /* ios-app */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		1DA037BB2E7B2B3E005DFD62 /* watch-controller-setup */ = {
+		1DA037BB2E7B2B3E005DFD62 /* iOSApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "watch-controller-setup";
+			path = iOSApp;
 			sourceTree = "<group>";
 		};
-		1DA037F72E7B5996005DFD62 /* watch-controller-app */ = {
+		1DA037F72E7B5996005DFD62 /* WatchApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = WatchApp;
+			sourceTree = "<group>";
+		};
+		1DD8FED02E7C8DF200B0893F /* Config */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				1DA038052E7B59AE005DFD62 /* Exceptions for "watch-controller-app" folder in "watch-controller-setup" target */,
+				1DD8FED52E7C8E2900B0893F /* Exceptions for "Config" folder in "ios-app" target */,
 			);
-			path = "watch-controller-app";
+			path = Config;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -95,19 +116,19 @@
 		1DA037752E7B25B3005DFD62 = {
 			isa = PBXGroup;
 			children = (
-				1DA037BB2E7B2B3E005DFD62 /* watch-controller-setup */,
-				1DA037F72E7B5996005DFD62 /* watch-controller-app */,
+				1DD8FEC82E7C8AC200B0893F /* Shared */,
+				1DA037BB2E7B2B3E005DFD62 /* iOSApp */,
+				1DA037F72E7B5996005DFD62 /* WatchApp */,
 				1DA037ED2E7B2F64005DFD62 /* Frameworks */,
 				1DA0377D2E7B25B3005DFD62 /* Products */,
-				1DA037E42E7B2C1D005DFD62 /* Assets.xcassets */,
 			);
 			sourceTree = "<group>";
 		};
 		1DA0377D2E7B25B3005DFD62 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1DA037BA2E7B2B3E005DFD62 /* watch-controller-setup.app */,
-				1DA037F62E7B5996005DFD62 /* watch-controller-app.app */,
+				1DA037BA2E7B2B3E005DFD62 /* ios-app.app */,
+				1DA037F62E7B5996005DFD62 /* watch-app.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,12 +140,70 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		1DD8FEC02E7C8AC200B0893F /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		1DD8FEC22E7C8AC200B0893F /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				1DD8FEC12E7C8AC200B0893F /* TouchEvent.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		1DD8FEC32E7C8AC200B0893F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		1DD8FEC42E7C8AC200B0893F /* Utils */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Utils;
+			sourceTree = "<group>";
+		};
+		1DD8FEC52E7C8AC200B0893F /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				1DD8FEC02E7C8AC200B0893F /* Extensions */,
+				1DD8FEC22E7C8AC200B0893F /* Models */,
+				1DD8FEC32E7C8AC200B0893F /* Services */,
+				1DD8FEC42E7C8AC200B0893F /* Utils */,
+				1DD8FED02E7C8DF200B0893F /* Config */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		1DD8FEC62E7C8AC200B0893F /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				1DD8FEC52E7C8AC200B0893F /* Shared */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		1DD8FEC82E7C8AC200B0893F /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				1DD8FEC62E7C8AC200B0893F /* Sources */,
+				1DD8FEC72E7C8AC200B0893F /* Package.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		1DA037B92E7B2B3E005DFD62 /* watch-controller-setup */ = {
+		1DA037B92E7B2B3E005DFD62 /* ios-app */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1DA037C22E7B2B3F005DFD62 /* Build configuration list for PBXNativeTarget "watch-controller-setup" */;
+			buildConfigurationList = 1DA037C22E7B2B3F005DFD62 /* Build configuration list for PBXNativeTarget "ios-app" */;
 			buildPhases = (
 				1DA037B62E7B2B3E005DFD62 /* Sources */,
 				1DA037B72E7B2B3E005DFD62 /* Frameworks */,
@@ -137,37 +216,39 @@
 				1DA038152E7B59F9005DFD62 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				1DA037BB2E7B2B3E005DFD62 /* watch-controller-setup */,
+				1DA037BB2E7B2B3E005DFD62 /* iOSApp */,
 			);
-			name = "watch-controller-setup";
+			name = "ios-app";
 			packageProductDependencies = (
 				1DA038212E7B7017005DFD62 /* Starscream */,
 			);
 			productName = "watch-controller-setup";
-			productReference = 1DA037BA2E7B2B3E005DFD62 /* watch-controller-setup.app */;
+			productReference = 1DA037BA2E7B2B3E005DFD62 /* ios-app.app */;
 			productType = "com.apple.product-type.application";
 		};
-		1DA037F52E7B5996005DFD62 /* watch-controller-app */ = {
+		1DA037F52E7B5996005DFD62 /* watch-app */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 1DA038012E7B5997005DFD62 /* Build configuration list for PBXNativeTarget "watch-controller-app" */;
+			buildConfigurationList = 1DA038012E7B5997005DFD62 /* Build configuration list for PBXNativeTarget "watch-app" */;
 			buildPhases = (
 				1DA037F22E7B5996005DFD62 /* Sources */,
 				1DA037F32E7B5996005DFD62 /* Frameworks */,
 				1DA037F42E7B5996005DFD62 /* Resources */,
 			);
 			buildRules = (
+				1DD8FEDD2E7C989B00B0893F /* PBXBuildRule */,
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				1DA037F72E7B5996005DFD62 /* watch-controller-app */,
+				1DA037F72E7B5996005DFD62 /* WatchApp */,
+				1DD8FED02E7C8DF200B0893F /* Config */,
 			);
-			name = "watch-controller-app";
+			name = "watch-app";
 			packageProductDependencies = (
 				1DA0381F2E7B6FF4005DFD62 /* Starscream */,
 			);
 			productName = "watch-controller-app Watch App";
-			productReference = 1DA037F62E7B5996005DFD62 /* watch-controller-app.app */;
+			productReference = 1DA037F62E7B5996005DFD62 /* watch-app.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -205,8 +286,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				1DA037B92E7B2B3E005DFD62 /* watch-controller-setup */,
-				1DA037F52E7B5996005DFD62 /* watch-controller-app */,
+				1DA037B92E7B2B3E005DFD62 /* ios-app */,
+				1DA037F52E7B5996005DFD62 /* watch-app */,
 			);
 		};
 /* End PBXProject section */
@@ -216,7 +297,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1DA0381D2E7B5C9B005DFD62 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -224,7 +304,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1DA0381A2E7B5C4F005DFD62 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,6 +314,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DD8FECB2E7C8AC200B0893F /* Package.swift in Sources */,
+				1DD8FECC2E7C8AC200B0893F /* TouchEvent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -242,6 +323,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1DD8FEC92E7C8AC200B0893F /* Package.swift in Sources */,
+				1DD8FECA2E7C8AC200B0893F /* TouchEvent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -250,7 +333,7 @@
 /* Begin PBXTargetDependency section */
 		1DA038152E7B59F9005DFD62 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 1DA037F52E7B5996005DFD62 /* watch-controller-app */;
+			target = 1DA037F52E7B5996005DFD62 /* watch-app */;
 			targetProxy = 1DA038142E7B59F9005DFD62 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -384,6 +467,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = CompAR;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR Kit exp";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -395,7 +479,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "xr.watch-controller-setup";
+				PRODUCT_BUNDLE_IDENTIFIER = "xr.compa-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -418,8 +502,10 @@
 				DEVELOPMENT_TEAM = QV92WSJZSB;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "watch-controller-setup/Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = CompAR;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.developer-tools";
+				INFOPLIST_KEY_NSCameraUsageDescription = "AR Kit exp";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -431,7 +517,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "xr.watch-controller-setup";
+				PRODUCT_BUNDLE_IDENTIFIER = "xr.compa-ios";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -457,14 +543,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = CompAR;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "xr.watch-controller-setup";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "xr.compa-ios";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "xr.watch-controller-setup.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "xr.compa-ios.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -491,14 +578,15 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = CompAR;
+				INFOPLIST_KEY_LSApplicationCategoryType = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "xr.watch-controller-setup";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "xr.compa-ios";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "xr.watch-controller-setup.watchkitapp";
+				PRODUCT_BUNDLE_IDENTIFIER = "xr.compa-ios.watchkitapp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = watchos;
 				SKIP_INSTALL = YES;
@@ -526,7 +614,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1DA037C22E7B2B3F005DFD62 /* Build configuration list for PBXNativeTarget "watch-controller-setup" */ = {
+		1DA037C22E7B2B3F005DFD62 /* Build configuration list for PBXNativeTarget "ios-app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DA037C32E7B2B3F005DFD62 /* Debug */,
@@ -535,7 +623,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		1DA038012E7B5997005DFD62 /* Build configuration list for PBXNativeTarget "watch-controller-app" */ = {
+		1DA038012E7B5997005DFD62 /* Build configuration list for PBXNativeTarget "watch-app" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				1DA038022E7B5997005DFD62 /* Debug */,

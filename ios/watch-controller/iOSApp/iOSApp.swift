@@ -9,7 +9,7 @@ struct WatchController_iOSApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationView {
-                SettingsView()
+                ContentView()
             }
             .environmentObject(configStore)
             .task {
@@ -26,8 +26,8 @@ struct WatchController_iOSApp: App {
     }
 
     private func startPhoneSocketBridgeIfPossible() {
-        let addr = self.configStore.currentConfig().serverAddress
-        if let url = URL(string: "https://cf0a7d8ac71e.ngrok-free.app/ingest/pad-coordinates/s") {
+//        let addr = self.configStore.currentConfig().serverAddress
+        if let url = URL(string: "https://61fa99d48da5.ngrok-free.app/ingest/pad-coordinates/s") {
             PhoneSocketBridge.shared.start(url: url)
         }
     }
