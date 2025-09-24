@@ -52,7 +52,7 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
     private let hudBaseHeightMeters: Float = 0.025 // visible height at reference depth before scaling
     private let hudMinScale: Float = 0.35
     private let hudMaxScale: Float = 1.75
-    private let hudVerticalOffsetMeters: Float = 0.075 // 7,5 cm above the joint along world Y
+    private let hudVerticalOffsetMeters: Float = 0.065 // 5,5 cm above the joint along world Y
     private var enableHUDPlane: Bool = true
     
     // HUD dot (moves on plane with pad touch)
@@ -62,6 +62,12 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
 
     // Cache for HUD planes by joint name
     private var hudPlaneEntities: [String: ModelEntity] = [:]
+
+    // Render-tick application
+    private var latestHudWorldPosition: SIMD3<Float>?
+
+    // Critically-damped 1‑pole (low-lag) filter for anchor position
+    private var positionFilter = OneEuro()
 
     init(frame: CGRect, statusSink: ARStatusSink?) {
         self.statusSink = statusSink
@@ -87,6 +93,15 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
         self.scene.addAnchor(dbg)
         self.jointDebugAnchor = dbg
         self.initHudAnchor(planeName: "watchHUD")
+
+        // Apply updates on render tick (reduces stutter/lag)
+        sceneUpdateSubscription = scene.subscribe(to: SceneEvents.Update.self) { [weak self] ev in
+            guard let self else { return }
+            guard let latest = self.latestHudWorldPosition else { return }
+            let dt = Float(ev.deltaTime)
+            let filtered = self.positionFilter.filter(latest, dt: dt)
+            self.hudAnchor?.position = filtered
+        }
     }
     
     private func hudDot(forPlaneNamed name: String) -> ModelEntity {
@@ -118,7 +133,6 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
         let plane = hudPlane(named: planeName)
         if plane.parent == nil, let anchor = hudAnchor { anchor.addChild(plane) }
 
-        // Ensure dot exists and is attached to the plane (inherits billboard + scaling)
         let dot = hudDot(forPlaneNamed: planeName)
         if dot.parent == nil { plane.addChild(dot) }
 
@@ -206,10 +220,16 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
         let pixelBuffer = frame.capturedImage
         let uiOrientation: UIInterfaceOrientation = self.window?.windowScene?.effectiveGeometry.interfaceOrientation ?? .portrait
         let orientation: CGImagePropertyOrientation = cgImagePropertyOrientation(for: uiOrientation)
-        let viewportSize = bounds.size;
+        let viewportSize = bounds.size
+        let displayTransform = frame.displayTransform(for: uiOrientation, viewportSize: viewportSize)
+        let invDisplayTransform = displayTransform.inverted()
 
         handQueue.async { [weak self] in
             guard let self else {return}
+            // Prefer raw depth for lower latency; fall back to smoothed if unavailable
+            let sceneDepth = frame.sceneDepth ?? frame.smoothedSceneDepth
+            let depthPB = sceneDepth?.depthMap
+            let confPB  = sceneDepth?.confidenceMap
             do {
                 try self.sequenceRequestHandler.perform([self.handPoseRequest], on: pixelBuffer, orientation: orientation)
                 let observations = self.handPoseRequest.results ?? []
@@ -228,14 +248,20 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
                 if let thumbJoint = try? chosen?.recognizedPoints(.thumb)[.thumbIP] {
                     let visionPoint = CGPoint(x: CGFloat(thumbJoint.location.x), y: CGFloat(thumbJoint.location.y))
                     let imageInCameraSpace = visionPointToCameraImage(visionPoint, orientation: orientation)
-                    let viewNorm = imageInCameraSpace.applying(frame.displayTransform(for: uiOrientation, viewportSize: viewportSize))
+                    let viewNorm = imageInCameraSpace.applying(displayTransform)
                     let screenPt = CGPoint(x: viewNorm.x * viewportSize.width,
                                            y: viewNorm.y * viewportSize.height)
+                    // Compute world position using cached transforms & raw depth (if available)
+                    let world = self.worldPositionRawCached(
+                        screenPt: screenPt,
+                        frame: frame,
+                        viewportSize: viewportSize,
+                        invDisplay: invDisplayTransform,
+                        depthPB: depthPB,
+                        confPB: confPB
+                    )
                     DispatchQueue.main.async {
-                        if let world = self.worldPositionRaw(screenPt: screenPt, frame: frame) {
-                            self.hudAnchor?.position = world
-                            print(self.hudAnchor?.position as Any)
-                        }
+                        self.latestHudWorldPosition = world
                     }
                 }
                 
@@ -246,16 +272,20 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
                             for (k, v) in dict where v.confidence > 0.2 {
                                 let visionPoint = CGPoint(x: CGFloat(v.location.x), y: CGFloat(v.location.y))
                                 let imageInCameraSpace = visionPointToCameraImage(visionPoint, orientation: orientation)
-                                let viewNorm = imageInCameraSpace.applying(frame.displayTransform(for: uiOrientation, viewportSize: viewportSize))
+                                let viewNorm = imageInCameraSpace.applying(displayTransform)
                                 let screenPt = CGPoint(x: viewNorm.x * viewportSize.width,
                                                        y: viewNorm.y * viewportSize.height)
                                 pts.append((name: k.rawValue.rawValue, pt: screenPt, confidence: v.confidence))
-
                             }
                         }
                     }
                     DispatchQueue.main.async {
-                        self.updateDebugHandJoints(points: pts, frame: frame, viewportSize: viewportSize)
+                        self.updateDebugHandJoints(points: pts,
+                                                   frame: frame,
+                                                   viewportSize: viewportSize,
+                                                   invDisplay: invDisplayTransform,
+                                                   depthPB: depthPB,
+                                                   confPB: confPB)
                     }
                 }
             } catch {
@@ -310,24 +340,38 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
     private func updateDebugHandJoints(
       points: [(name: String, pt: CGPoint, confidence: Float)],
       frame: ARFrame,
-      viewportSize: CGSize
+      viewportSize: CGSize,
+      invDisplay: CGAffineTransform,
+      depthPB: CVPixelBuffer?,
+      confPB: CVPixelBuffer?
     ) {
-        
         for item in points {
             let screenPt = item.pt
-            
             if debugVisualizeHandJoints {
-                if let world = self.worldPositionRaw(screenPt: screenPt, frame: frame) {
+                if let world = self.worldPositionRawCached(screenPt: screenPt,
+                                                          frame: frame,
+                                                          viewportSize: viewportSize,
+                                                          invDisplay: invDisplay,
+                                                          depthPB: depthPB,
+                                                          confPB: confPB) {
                     guard let anchor = jointDebugAnchor else { return }
                     let node = debugSphere(named: item.name)
                     node.position = world
-                    
                     // Depth-aware visual scale (smaller when farther)
-                    let depth = self.sampleDepthMeters(at: screenPt, frame: frame, viewportSize: viewportSize) ?? referenceDepthMeters
+                    let depth: Float = {
+                        if let depthPB {
+                            return self.sampleDepthMetersCached(at: screenPt,
+                                                                viewportSize: viewportSize,
+                                                                invDisplay: invDisplay,
+                                                                depthPB: depthPB,
+                                                                confPB: confPB) ?? referenceDepthMeters
+                        } else {
+                            return referenceDepthMeters
+                        }
+                    }()
                     var scale = referenceDepthMeters / max(0.05, depth) // inverse with floor
                     scale = max(minSphereScale, min(maxSphereScale, scale))
                     node.setScale(SIMD3<Float>(repeating: scale), relativeTo: nil)
-                    
                     if node.parent == nil { anchor.addChild(node) }
                 }
             }
@@ -354,22 +398,17 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
                                               height: hudBaseHeightMeters)
 
         var material = UnlitMaterial()
-        material.blending = .transparent(opacity: 1.0) // allow transparency in texture
+        material.blending = .transparent(opacity: 1.0)
         if let outline = makePlaneOutlineImage(size: 512).cgImage,
            let tex = try? TextureResource(image: outline, options: .init(semantic: .color)) {
             material.color = .init(texture: .init(tex))
         } else {
-            // Fallback: opaque white perimeter via tint if texture creation fails
             material.color = .init(tint: .white)
         }
 
         let entity = ModelEntity(mesh: mesh, materials: [material])
 
-        // Keep the plane facing the camera so it reads like a HUD.
         entity.components.set(BillboardComponent())
-
-        // Start unit; we scale per-frame based on depth.
-        entity.scale = .one
 
         hudPlaneEntities[name] = entity
         return entity
@@ -391,6 +430,31 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
         if let depthMeters = sampleDepthMeters(at: screenPt, frame: frame, viewportSize: viewportSize) {
             // depth is line-of-sight distance from the camera → walk along the ray
             return origin + dir * depthMeters
+        }
+        return origin + dir * fixedDistanceMeters
+    }
+
+    /// World position from a screen point using cached transforms and (preferably raw) depth.
+    private func worldPositionRawCached(
+        screenPt: CGPoint,
+        frame: ARFrame,
+        viewportSize: CGSize,
+        invDisplay: CGAffineTransform,
+        depthPB: CVPixelBuffer?,
+        confPB: CVPixelBuffer?
+    ) -> SIMD3<Float>? {
+        guard let ray = self.ray(through: screenPt) else { return nil }
+        let origin = ray.origin
+        let dir = simd_normalize(ray.direction)
+
+        if let depthPB {
+            if let d = sampleDepthMetersCached(at: screenPt,
+                                               viewportSize: viewportSize,
+                                               invDisplay: invDisplay,
+                                               depthPB: depthPB,
+                                               confPB: confPB) {
+                return origin + dir * d
+            }
         }
         return origin + dir * fixedDistanceMeters
     }
@@ -482,6 +546,77 @@ final class OverlayARView: RealityKit.ARView, ARSessionDelegate {
         let d1 = d01 + (d11 - d01) * tx
         let d = d0 + (d1 - d0) * ty
 
+        return (d.isFinite && d > 0) ? d : nil
+    }
+
+    /// Same as sampleDepthMeters but uses cached inverse display transform and pre-fetched pixel buffers.
+    private func sampleDepthMetersCached(
+        at screenPt: CGPoint,
+        viewportSize: CGSize,
+        invDisplay: CGAffineTransform,
+        depthPB: CVPixelBuffer,
+        confPB: CVPixelBuffer?
+    ) -> Float? {
+        // Map view point -> normalized image coords using provided inverse displayTransform
+        let viewNorm = CGPoint(x: screenPt.x / viewportSize.width,
+                               y: screenPt.y / viewportSize.height)
+        var imgNorm = viewNorm.applying(invDisplay) // [0,1]x[0,1], top-left origin
+        if !imgNorm.x.isFinite || !imgNorm.y.isFinite { return nil }
+        imgNorm.x = max(0, min(1, imgNorm.x))
+        imgNorm.y = max(0, min(1, imgNorm.y))
+
+        let w = CVPixelBufferGetWidth(depthPB)
+        let h = CVPixelBufferGetHeight(depthPB)
+        let fx = CGFloat(w - 1) * imgNorm.x
+        let fy = CGFloat(h - 1) * imgNorm.y
+
+        CVPixelBufferLockBaseAddress(depthPB, .readOnly)
+        defer { CVPixelBufferUnlockBaseAddress(depthPB, .readOnly) }
+        guard let base = CVPixelBufferGetBaseAddress(depthPB) else { return nil }
+        let bytesPerRow = CVPixelBufferGetBytesPerRow(depthPB)
+
+        let x0 = max(0, min(w - 1, Int(floor(fx))))
+        let y0 = max(0, min(h - 1, Int(floor(fy))))
+        let x1 = max(0, min(w - 1, x0 + 1))
+        let y1 = max(0, min(h - 1, y0 + 1))
+        let tx = Float(fx - CGFloat(x0))
+        let ty = Float(fy - CGFloat(y0))
+
+        func depthAt(_ x: Int, _ y: Int) -> Float {
+            let rowPtr = base.advanced(by: y * bytesPerRow)
+            let fPtr = rowPtr.assumingMemoryBound(to: Float.self)
+            return fPtr[x]
+        }
+
+        var d00 = depthAt(x0, y0)
+        var d10 = depthAt(x1, y0)
+        var d01 = depthAt(x0, y1)
+        var d11 = depthAt(x1, y1)
+
+        if let confPB {
+            CVPixelBufferLockBaseAddress(confPB, .readOnly)
+            defer { CVPixelBufferUnlockBaseAddress(confPB, .readOnly) }
+            if let cbase = CVPixelBufferGetBaseAddress(confPB) {
+                let cBPR = CVPixelBufferGetBytesPerRow(confPB)
+                func confAt(_ x: Int, _ y: Int) -> Float {
+                    let row = cbase.advanced(by: y * cBPR)
+                    let p = row.assumingMemoryBound(to: UInt8.self)[x]
+                    return max(0.05, Float(p) / 255.0)
+                }
+                let w00 = confAt(x0, y0), w10 = confAt(x1, y0)
+                let w01 = confAt(x0, y1), w11 = confAt(x1, y1)
+                if w00 + w10 > 0 {
+                    d00 = d00 * (w00 / (w00 + w10)) + d10 * (w10 / (w00 + w10))
+                }
+                if w01 + w11 > 0 {
+                    d01 = d01 * (w01 / (w01 + w11)) + d11 * (w11 / (w01 + w11))
+                }
+            }
+        }
+
+        let d0 = d00 + (d10 - d00) * tx
+        let d1 = d01 + (d11 - d01) * tx
+        let d = d0 + (d1 - d0) * ty
         return (d.isFinite && d > 0) ? d : nil
     }
 }
@@ -632,5 +767,21 @@ func visionPointToCameraImage(_ pBL: CGPoint,
         return pBL
     @unknown default:
         return pBL
+    }
+}
+
+// Critically-damped 1‑pole filter (low lag, frame-time aware)
+struct OneEuro {
+    var cutoff: Float = 4
+    static let deadband: Float = 0.004 // tune 1–4 mm
+    private var prev: SIMD3<Float>?
+    mutating func filter(_ x: SIMD3<Float>, dt: Float) -> SIMD3<Float> {
+        guard let p = prev, dt.isFinite, dt > 0 else { prev = x; return x }
+        if simd_length(x - p) < OneEuro.deadband { return p } // ignore tiny changes
+        let twoPiF = 2.0 as Float * .pi * max(0.001, cutoff)
+        let alpha = 1.0 / (1.0 + (1.0 / (twoPiF * dt)))
+        let y = p + alpha * (x - p)
+        prev = y
+        return y
     }
 }
